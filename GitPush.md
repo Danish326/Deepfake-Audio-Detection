@@ -45,3 +45,20 @@ git commit -m "feat: integrate ResNet18 models and preprocessing pipeline (Step 
 git add apps/predictions/ apps/uploads/ step_4.md tests/test_step4.py GitPush.md
 git commit -m "feat: implement database persistence using Django ORM (Step 4)"
 ```
+
+## Step 5: Final Documentation & Push to Remote
+*Purpose: Secure the repository by updating `.gitignore` to prevent secret leaks (following `github_prereq.md`), commit remaining documentation, and push the entire history to the GitHub remote repository.*
+
+**Commands:**
+```bash
+# Add updated gitignore and remaining safe documentation files
+git add .gitignore *.md pytest.ini logs/ media/
+git commit -m "chore: update documentation and secure gitignore rules"
+
+# Add the remote GitHub repository
+git remote add origin https://github.com/Danish326/Deepfake-Audio-Detection.git
+
+# Push the master branch to GitHub
+git branch -M main
+git push -u origin main
+```

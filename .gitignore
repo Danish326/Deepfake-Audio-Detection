@@ -58,3 +58,8 @@ htmlcov/
 # ── OS ───────────────────────────────────
 .DS_Store
 Thumbs.db
+
+# ── Project Specific Ignore ──────────────
+superuser_credentials.txt
+Model Training and Testing Python Code and Models/
+Deepfake Audio Detection backend documentation request.pdf
