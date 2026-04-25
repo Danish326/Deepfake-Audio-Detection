@@ -21,8 +21,9 @@ import os
 from pathlib import Path
 
 from asgiref.sync import sync_to_async
-from fastapi import APIRouter, UploadFile, File, Request, HTTPException, status
+from fastapi import APIRouter, UploadFile, File, Request, HTTPException, status, Depends
 
+from api.dependencies import get_request_id, get_current_user
 from api.schemas.predict import PredictionResponse, PerModelOutput
 from api.schemas.common import ErrorDetail, ErrorResponse
 from apps.predictions.services import create_prediction_record
@@ -93,8 +94,9 @@ def _validate_file(filename: str, content_length: int | None) -> None:
     },
 )
 async def predict_audio(
-    request: Request,
     file: UploadFile = File(..., description="Audio file to analyse (.wav / .mp3 / .flac)"),
+    request_id: str = Depends(get_request_id),
+    user = Depends(get_current_user),
 ) -> PredictionResponse:
     """
     Deepfake audio detection endpoint.
@@ -107,14 +109,12 @@ async def predict_audio(
     5. Selects the most-confident prediction (most-confident-wins aggregation).
     6. Returns final label, confidence, and full per-model breakdown.
     """
-    request_id = getattr(request.state, "request_id", None)
     t_start = time.perf_counter()
 
     # ── Step 1: Pre-check filename and declared Content-Length ──
-    _cl = request.headers.get("content-length")
     _validate_file(
         filename=file.filename or "",
-        content_length=int(_cl) if _cl and _cl.isdigit() else None,
+        content_length=file.size,
     )
 
     # ── Step 2: Read bytes ───────────────────────────────────────
@@ -190,6 +190,7 @@ async def predict_audio(
         mime_type=content_type,
         request_id=request_id,
         processing_time_ms=round(total_ms, 2),
+        user=user,
     )
 
     # ── Step 6: Build response ───────────────────────────────────

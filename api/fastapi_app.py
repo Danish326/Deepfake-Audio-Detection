@@ -20,6 +20,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.middleware import RequestIDMiddleware, TimingMiddleware
+from api.routes.auth import router as auth_router
 from api.routes.health import router as health_router
 from api.routes.predict import router as predict_router
 from api.routes.predictions import router as predictions_router
@@ -64,6 +65,7 @@ def create_app() -> FastAPI:
     # ── Routers ───────────────────────────────────────────────
     # All routes are prefixed with /v1 so the full path is /api/v1/...
     app.include_router(health_router,  prefix="/v1")
+    app.include_router(auth_router,    prefix="/v1")
     app.include_router(predict_router, prefix="/v1")
     app.include_router(predictions_router, prefix="/v1")
 

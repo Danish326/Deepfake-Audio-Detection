@@ -62,3 +62,14 @@ git remote add origin https://github.com/Danish326/Deepfake-Audio-Detection.git
 git branch -M main
 git push -u origin main
 ```
+
+## Step 6: Authentication & Endpoint Security (Step 5 of Project)
+*Purpose: Commit the PyJWT integration, authentication routes, and the required dependency on the prediction endpoint.*
+
+**Commands:**
+```bash
+# Add the modified requirements, routes, schemas, and tests
+git add .
+git commit -m "feat: implement JWT authentication and lock down endpoints (Step 5)"
+git push origin main
+```

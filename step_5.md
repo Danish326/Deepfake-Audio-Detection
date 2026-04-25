@@ -1,6 +1,6 @@
 # Step 5 — Authentication (JWT)
 
-> **Status**: 🟡 Awaiting Approval
+> **Status**: ✅ Implemented
 >
 > **Phase mapping**: Phase 5 from the spec (`project-software-specification.md`)
 
@@ -56,15 +56,10 @@ We will create a `get_current_user` dependency. When attached to an endpoint, it
 
 ---
 
-## Success Criteria for This Step
+## ✅ Success Criteria Met
 
-- [ ] `PyJWT` is successfully installed and added to `requirements.txt`.
-- [ ] `POST /api/v1/auth/login` successfully returns a JWT for valid Django users.
-- [ ] `GET /api/v1/auth/me` returns the correct user profile when provided a valid token.
-- [ ] `POST /api/v1/predict/audio` rejects unauthenticated requests with a `401 Unauthorized`.
-- [ ] Authenticated predictions successfully save the `user_id` to the database.
-
----
-
-> ✅ **Approve this step to begin implementation.**
-> Once implemented, this file will be updated with a summary of what was actually built.
+- [x] `PyJWT` is successfully installed and added to `requirements.txt`.
+- [x] `POST /api/v1/auth/login` successfully returns a JWT for valid Django users.
+- [x] `GET /api/v1/auth/me` returns the correct user profile when provided a valid token.
+- [x] `POST /api/v1/predict/audio` rejects unauthenticated requests with a `401 Unauthorized`.
+- [x] Authenticated predictions successfully save the `user_id` to the database.
