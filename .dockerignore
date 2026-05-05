@@ -1,0 +1,34 @@
+# Git
+.git
+.gitignore
+GitPush.md
+
+# Virtual environments
+venv/
+env/
+.env
+
+# Cache and temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local Database
+db.sqlite3
+
+# Massive Datasets and Notebooks
+Model Training and Testing Python Code and Models/
+Dataset/
+*.ipynb
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+
+# Media uploads (let Docker handle this via volumes)
+media/uploads/

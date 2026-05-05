@@ -20,11 +20,16 @@ import logging
 from contextlib import asynccontextmanager
 
 from django.core.asgi import get_asgi_application
+from django.contrib.staticfiles.handlers import ASGIStaticFilesHandler
+from django.conf import settings
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
 # Initialise Django — this must happen before any Django model imports.
 django_asgi_app = get_asgi_application()
+
+if settings.DEBUG:
+    django_asgi_app = ASGIStaticFilesHandler(django_asgi_app)
 
 # FastAPI imported after Django is ready.
 from api.fastapi_app import create_app  # noqa: E402

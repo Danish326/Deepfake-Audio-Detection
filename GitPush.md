@@ -73,3 +73,14 @@ git add .
 git commit -m "feat: implement JWT authentication and lock down endpoints (Step 5)"
 git push origin main
 ```
+
+## Step 7: Docker Deployment Hardening (Step 6 of Project)
+*Purpose: Commit the Dockerfile, docker-compose.yml, entrypoint script, Nginx config, and deployment documentation.*
+
+**Commands:**
+```bash
+# Add Docker deployment files and documentation
+git add Dockerfile docker-entrypoint.sh docker-compose.yml nginx/ step_6.md
+git commit -m "feat: add Docker deployment with PostgreSQL, Nginx, and Gunicorn (Step 6)"
+git push origin main
+```

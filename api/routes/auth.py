@@ -1,6 +1,8 @@
 import jwt
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+
 from asgiref.sync import sync_to_async
 from django.contrib.auth import authenticate
 from django.conf import settings
@@ -38,7 +40,7 @@ def create_access_token(data: dict, expires_delta: timedelta):
     response_model=TokenResponse,
     responses={401: {"model": ErrorResponse}}
 )
-async def login(credentials: LoginRequest):
+async def login(credentials: OAuth2PasswordRequestForm = Depends()):
     """
     Exchanges valid credentials for a JWT access token.
     """

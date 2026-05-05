@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # ---------------------------------------------
+  # 1. PostgreSQL Database
+  # ---------------------------------------------
+  db:
+    image: postgres:15-alpine
+    container_name: deepfake_db
+    restart: always
+    environment:
+      POSTGRES_DB: deepfake_db
+      POSTGRES_USER: deepfake_user
+      POSTGRES_PASSWORD: deepfake_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deepfake_user -d deepfake_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+  # ---------------------------------------------
+  # 2. Python Backend (Django + FastAPI + ML)
+  # ---------------------------------------------
+  backend:
+    build: .
+    container_name: deepfake_backend
+    restart: always
+    environment:
+      # Use Staging environment config to trigger PostgreSQL Usage
+      APP_ENV: staging
+      SECRET_KEY: "change-this-in-production-long-secure-key"
+      ALLOWED_HOSTS: "localhost,127.0.0.1,backend"
+      # Connection string for the db container
+      DATABASE_URL: "postgres://deepfake_user:deepfake_password@db:5432/deepfake_db"
+    volumes:
+      # Mount ML weights so the container can access them without rebuilding
+      - ./ml/weights:/app/ml/weights
+      # Mount static and media folders so Nginx can read them
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ---------------------------------------------
+  # 3. Nginx Reverse Proxy
+  # ---------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: deepfake_nginx
+    restart: always
+    ports:
+      # Exposes port 80 to the internet
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - static_volume:/app/staticfiles:ro
+      - media_volume:/app/media:ro
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
