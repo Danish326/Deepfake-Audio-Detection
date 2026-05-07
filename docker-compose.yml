@@ -63,6 +63,20 @@ services:
     depends_on:
       - backend
 
+  # ---------------------------------------------
+  # 4. React Frontend
+  # ---------------------------------------------
+  frontend:
+    build:
+      context: ../deepfake_audio_detection_frontend
+      dockerfile: Dockerfile
+    container_name: deepfake_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - nginx
+
 volumes:
   postgres_data:
   static_volume:
