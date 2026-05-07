@@ -1,7 +1,8 @@
 from uuid import UUID
 
 from asgiref.sync import sync_to_async
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status, Depends
+from api.dependencies import get_current_user
 
 from api.schemas.predict import (
     PerModelOutput,
@@ -35,8 +36,8 @@ def _to_record(prediction) -> PredictionRecord:
 
 
 @router.get("/predictions/history", response_model=PredictionHistoryResponse)
-async def prediction_history(request: Request, limit: int = 20):
-    rows = await sync_to_async(list_predictions)(limit=limit)
+async def prediction_history(request: Request, limit: int = 20, user=Depends(get_current_user)):
+    rows = await sync_to_async(list_predictions)(user=user, limit=limit)
     return PredictionHistoryResponse(
         success=True,
         request_id=getattr(request.state, "request_id", None),

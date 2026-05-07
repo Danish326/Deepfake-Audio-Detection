@@ -27,7 +27,10 @@ from api.dependencies import get_request_id, get_current_user
 from api.schemas.predict import PredictionResponse, PerModelOutput
 from api.schemas.common import ErrorDetail, ErrorResponse
 from apps.predictions.services import create_prediction_record
+from apps.subscriptions.quota import enforce_quota
+from apps.subscriptions.services import increment_usage
 from ml.inference.predictor import predict
+from ml.preprocessing.audio_io import get_audio_duration
 from ml.utils.constants import (
     ALLOWED_AUDIO_EXTENSIONS,
     MAX_UPLOAD_SIZE_BYTES,
@@ -37,6 +40,9 @@ from ml.utils.exceptions import (
     AudioLoadError,
     FeatureExtractionError,
     ModelNotLoadedError,
+    QuotaExceededError,
+    AudioTooLongError,
+    SubscriptionExpiredError,
 )
 
 logger = logging.getLogger("api")
@@ -146,6 +152,21 @@ async def predict_audio(
         request_id,
     )
 
+    # ── Step 3.5: Enforce Quota ──────────────────────────────────
+    try:
+        # Fast check for duration before ML runs
+        duration = await sync_to_async(get_audio_duration)(audio_bytes)
+        plan = await sync_to_async(enforce_quota)(user, duration)
+    except (QuotaExceededError, AudioTooLongError, SubscriptionExpiredError) as exc:
+        logger.warning("Quota rejected: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=ErrorDetail(
+                code="QUOTA_EXCEEDED",
+                message=str(exc),
+            ).model_dump(),
+        )
+
     # ── Step 4: Run inference ────────────────────────────────────
     try:
         result = predict(audio_bytes)
@@ -180,6 +201,9 @@ async def predict_audio(
             ).model_dump(),
         )
 
+    # ── Step 4.5: Increment Usage ────────────────────────────────
+    await sync_to_async(increment_usage)(user)
+
     # ── Step 5: Persist result (Step 4) ──────────────────────────
     total_ms = (time.perf_counter() - t_start) * 1000
     content_type = file.content_type or ""
@@ -195,15 +219,17 @@ async def predict_audio(
 
     # ── Step 6: Build response ───────────────────────────────────
 
-    per_model = {
-        key: PerModelOutput(
-            label=vals["label"],
-            confidence=vals["confidence"],
-            prob_real=vals["prob_real"],
-            prob_fake=vals["prob_fake"],
-        )
-        for key, vals in result.per_model_summary.items()
-    }
+    per_model = {}
+    if plan.show_per_model_breakdown:
+        per_model = {
+            key: PerModelOutput(
+                label=vals["label"],
+                confidence=vals["confidence"],
+                prob_real=vals["prob_real"],
+                prob_fake=vals["prob_fake"],
+            )
+            for key, vals in result.per_model_summary.items()
+        }
 
     return PredictionResponse(
         success=True,

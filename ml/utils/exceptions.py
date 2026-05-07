@@ -19,3 +19,15 @@ class ModelLoadError(Exception):
 
 class ModelNotLoadedError(Exception):
     """Raised when inference is attempted before models have been loaded."""
+
+
+class QuotaExceededError(Exception):
+    """Raised when a user exceeds their monthly prediction limit."""
+
+
+class AudioTooLongError(Exception):
+    """Raised when uploaded audio exceeds the max duration of the user's plan."""
+
+
+class SubscriptionExpiredError(Exception):
+    """Raised when a user's subscription is not active."""

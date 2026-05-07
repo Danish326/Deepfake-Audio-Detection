@@ -54,3 +54,19 @@ def load_audio_from_bytes(audio_bytes: bytes) -> np.ndarray:
 
     logger.debug("Audio loaded: %d samples @ %d Hz (%.2fs)", len(wave), sr, len(wave) / sr)
     return wave
+
+def get_audio_duration(audio_bytes: bytes) -> float:
+    """Fast check for audio duration in seconds without full decode."""
+    try:
+        import soundfile as sf
+        buf = io.BytesIO(audio_bytes)
+        info = sf.info(buf)
+        return info.duration
+    except Exception as exc:
+        # Fallback to librosa if soundfile fails
+        try:
+            buf = io.BytesIO(audio_bytes)
+            return librosa.get_duration(path=buf)
+        except Exception as e:
+            raise AudioLoadError(f"Failed to get audio duration: {e}") from e
+

@@ -7,7 +7,7 @@ from asgiref.sync import sync_to_async
 from django.contrib.auth import authenticate
 from django.conf import settings
 
-from api.schemas.auth import LoginRequest, TokenResponse, UserResponse
+from api.schemas.auth import LoginRequest, TokenResponse, UserResponse, RegisterRequest
 from api.schemas.common import ErrorDetail, ErrorResponse
 
 # We will implement get_current_user in dependencies.py shortly.
@@ -24,6 +24,29 @@ def authenticate_user(username, password):
     Runs synchronously but wrapped for async execution.
     """
     return authenticate(username=username, password=password)
+
+@sync_to_async
+def create_user(username, email, password):
+    """
+    Creates a new Django user and returns it.
+    Raises ValueError if username or email already exists.
+    """
+    User = settings.AUTH_USER_MODEL
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    
+    if User.objects.filter(username=username).exists():
+        raise ValueError("USERNAME_TAKEN")
+    if User.objects.filter(email=email).exists():
+        raise ValueError("EMAIL_TAKEN")
+        
+    user = User.objects.create_user(username=username, email=email, password=password)
+    
+    # Auto-assign Free plan
+    from apps.subscriptions.services import get_user_subscription
+    get_user_subscription(user)
+    
+    return user
 
 def create_access_token(data: dict, expires_delta: timedelta):
     """
@@ -51,6 +74,35 @@ async def login(credentials: OAuth2PasswordRequestForm = Depends()):
             detail={"code": "INVALID_CREDENTIALS", "message": "Incorrect username or password", "details": {}}
         )
     
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": str(user.id), "username": user.username},
+        expires_delta=access_token_expires
+    )
+    
+    return TokenResponse(
+        access_token=access_token,
+        expires_in=int(access_token_expires.total_seconds())
+    )
+
+@router.post(
+    "/register",
+    response_model=TokenResponse,
+    responses={409: {"model": ErrorResponse}}
+)
+async def register(request: RegisterRequest):
+    """
+    Registers a new user, auto-assigns the Free plan, and returns a JWT token.
+    """
+    try:
+        user = await create_user(request.username, request.email, request.password)
+    except ValueError as e:
+        error_code = str(e)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"code": error_code, "message": "User with this username or email already exists.", "details": {}}
+        )
+        
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": str(user.id), "username": user.username},

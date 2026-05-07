@@ -63,3 +63,14 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
             detail={"code": "INACTIVE_USER", "message": "Inactive user account", "details": {}},
         )
     return user
+
+async def get_current_admin_user(user = Depends(get_current_user)):
+    """
+    Validates that the current user has admin privileges.
+    """
+    if not (user.is_staff or user.is_superuser):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "FORBIDDEN", "message": "Admin privileges required", "details": {}},
+        )
+    return user

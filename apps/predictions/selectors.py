@@ -9,6 +9,8 @@ def get_prediction_by_id(prediction_id):
     )
 
 
-def list_predictions(limit: int = 20):
-    safe_limit = max(1, min(limit, 100))
-    return list(Prediction.objects.select_related("uploaded_audio").all()[:safe_limit])
+def list_predictions(user, limit: int = 20):
+    qs = Prediction.objects.select_related("uploaded_audio").filter(user=user).order_by("-created_at")
+    if limit > 0:
+        return list(qs[:limit])
+    return list(qs)

@@ -24,6 +24,8 @@ from api.routes.auth import router as auth_router
 from api.routes.health import router as health_router
 from api.routes.predict import router as predict_router
 from api.routes.predictions import router as predictions_router
+from api.routes.quota import router as quota_router
+from api.routes.admin import router as admin_router
 
 logger = logging.getLogger("api")
 
@@ -68,6 +70,8 @@ def create_app() -> FastAPI:
     app.include_router(auth_router,    prefix="/v1")
     app.include_router(predict_router, prefix="/v1")
     app.include_router(predictions_router, prefix="/v1")
+    app.include_router(quota_router, prefix="/v1")
+    app.include_router(admin_router, prefix="/v1")
 
     logger.info("FastAPI application created — docs at /api/v1/docs")
     return app

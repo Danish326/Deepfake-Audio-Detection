@@ -8,6 +8,13 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
+class RegisterRequest(BaseModel):
+    """Schema for user registration."""
+    username: str
+    email: EmailStr
+    password: str
+
+
 class TokenResponse(BaseModel):
     """Schema for a successful JWT token issuance."""
     access_token: str
@@ -22,6 +29,7 @@ class UserResponse(BaseModel):
     first_name: str
     last_name: str
     is_staff: bool
+    is_superuser: bool
     is_active: bool
     date_joined: datetime
 
