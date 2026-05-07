@@ -94,6 +94,7 @@ class PredictionRecord(BaseModel):
     filename: Optional[str] = None
     request_id: Optional[str] = None
     created_at: str
+    anonymized_user_id: Optional[str] = None
     per_model: Dict[str, PerModelOutput]
 
 

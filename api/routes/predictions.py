@@ -1,3 +1,4 @@
+import hashlib
 from uuid import UUID
 
 from asgiref.sync import sync_to_async
@@ -19,6 +20,11 @@ def _to_record(prediction) -> PredictionRecord:
         key: PerModelOutput(**vals)
         for key, vals in (prediction.per_model or {}).items()
     }
+    
+    anonymized_user_id = None
+    if prediction.user_id:
+        anonymized_user_id = hashlib.sha256(str(prediction.user_id).encode()).hexdigest()[:8]
+
     return PredictionRecord(
         prediction_id=str(prediction.id),
         label=prediction.final_label,
@@ -31,6 +37,7 @@ def _to_record(prediction) -> PredictionRecord:
         filename=prediction.uploaded_audio.original_filename if prediction.uploaded_audio else None,
         request_id=prediction.request_id or None,
         created_at=prediction.created_at.isoformat(),
+        anonymized_user_id=anonymized_user_id,
         per_model=per_model,
     )
 

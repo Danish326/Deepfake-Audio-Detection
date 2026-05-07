@@ -7,7 +7,9 @@ from django.db.models import Sum
 from api.dependencies import get_current_admin_user
 from api.schemas.admin import AdminUsersResponse, AdminPredictionsResponse, AdminStatsResponse, UserAdminRecord
 from apps.predictions.models import Prediction
+from apps.audit_logs.models import AuditLog
 from api.routes.predictions import _to_record
+from pydantic import BaseModel
 
 logger = logging.getLogger("api")
 router = APIRouter(tags=["Admin"])
@@ -29,6 +31,18 @@ def get_stats():
     # If audio duration is stored, we could sum it. We'll leave it 0 for now.
     return total_users, total_predictions
 
+def create_audit_log(user_id, action, metadata_json, ip_address):
+    AuditLog.objects.create(
+        user_id=user_id,
+        action=action,
+        metadata_json=metadata_json,
+        ip_address=ip_address,
+        status_code=200
+    )
+
+class AuditLogRequest(BaseModel):
+    action: str
+    metadata: dict = {}
 
 @router.get("/admin/users", response_model=AdminUsersResponse)
 async def list_users_admin(request: Request, limit: int = 50, admin_user=Depends(get_current_admin_user)):
@@ -78,3 +92,19 @@ async def get_admin_stats(request: Request, admin_user=Depends(get_current_admin
         total_predictions=total_predictions,
         total_audio_duration_seconds=0.0
     )
+
+
+@router.post("/admin/audit-logs")
+async def log_admin_action(
+    payload: AuditLogRequest,
+    request: Request,
+    admin_user=Depends(get_current_admin_user)
+):
+    ip_address = request.client.host if request.client else None
+    await sync_to_async(create_audit_log)(
+        user_id=admin_user.id,
+        action=payload.action,
+        metadata_json=payload.metadata,
+        ip_address=ip_address
+    )
+    return {"success": True, "message": "Log created successfully"}
